@@ -5,6 +5,7 @@ import mongodbConfig from '../config/mongodb.config';
 import { ScoreSchema } from './schemas/scores.schema';
 import { ScoresController } from './scores.controller';
 import { ScoresService } from './scores.service';
+import { AudioToAsrController } from './audio-to-asr/audio-to-asr.controller';
 
 @Module({
     imports: [
@@ -14,7 +15,7 @@ import { ScoresService } from './scores.service';
         MongooseModule.forRoot(process.env.MONGO_URL),
         MongooseModule.forFeature([{ name: 'Score', schema: ScoreSchema }])
     ],
-    controllers: [ScoresController],
+    controllers: [ScoresController, AudioToAsrController],
     providers: [
         ScoresService
     ]

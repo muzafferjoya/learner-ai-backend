@@ -21,6 +21,14 @@ export class Score {
                         identification_status: { type: Number },
                     },
                 ],
+                anamolydata_scores: [
+                    {
+                        token: { type: String, required: true },
+                        hexcode: { type: String },
+                        confidence_score: { type: Number, required: true },
+                        identification_status: { type: Number },
+                    },
+                ],
             },
         ],
         required: true,
@@ -29,6 +37,12 @@ export class Score {
         session_id: string;
         date: Date;
         confidence_scores: {
+            token: string;
+            hexcode: string;
+            confidence_score: number;
+            identification_status: number
+        }[];
+        anamolydata_scores: {
             token: string;
             hexcode: string;
             confidence_score: number;
