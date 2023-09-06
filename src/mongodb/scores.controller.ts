@@ -13,18 +13,19 @@ export class ScoresController {
   @Post()
   create(@Res() response: FastifyReply, @Body() createScoreDto: any) {
     try {
+
       let confidence_scoresArr = [];
       let anomaly_scoreArr = [];
 
       let originalText = createScoreDto.original_text;
       let responseText = createScoreDto.output[0].source;
-
       let originalTextTokensArr = originalText.split("");
       let responseTextTokensArr = responseText.split("");
+
       let incorrectTokens = [];
       let correctTokens = [];
       let missingTokens = [];
-      // let wordTokensMap = [];
+
       let vowelSignArr = [
         "ா",
         "ி",
@@ -39,6 +40,9 @@ export class ScoresController {
         "ௌ",
         "்",
       ];
+
+
+      // Comparison Logic
 
       if (originalText !== responseText) {
 
@@ -95,7 +99,7 @@ export class ScoresController {
           return costs[s2.length];
         }
 
-        console.log(compareCharArr);
+        // console.log(compareCharArr);
 
 
         for (let [originalTextWordsIndex, originalTextWordsArrELE] of compareCharArr.entries()) {
@@ -179,6 +183,7 @@ export class ScoresController {
             }
           }
         }
+
       } else {
         let prevEle = '';
         let isPrevVowel = false;
@@ -208,6 +213,7 @@ export class ScoresController {
       //token list for ai4bharat response
       let tokenArr = [];
 
+      // Create Single Array from AI4bharat tokens array
       createScoreDto.output[0].nBestTokens.forEach(element => {
         element.tokens.forEach(token => {
           tokenArr.push(...Object.entries(token));
@@ -218,6 +224,7 @@ export class ScoresController {
       let prevEle = '';
       let isPrevVowel = false;
 
+      // Create Unique token array
       for (let [tokenArrEle, tokenArrEleVal] of tokenArr) {
         for (let keyEle of tokenArrEle.split("")) {
           if (vowelSignArr.includes(keyEle)) {
@@ -243,6 +250,7 @@ export class ScoresController {
 
       isPrevVowel = false;
 
+      // Get best score for Each Char
       for (let char of uniqueCharArr) {
         let score = 0.0;
         let prevChar = '';
@@ -282,6 +290,7 @@ export class ScoresController {
         filteredTokenArr.push({ charkey: char, charvalue: score });
       }
 
+      // Create confidence score array and anomoly array
       for (let value of filteredTokenArr) {
         let score: any = value.charvalue
 
@@ -341,6 +350,7 @@ export class ScoresController {
         }
       };
 
+      // Store Array to DB
       let data = this.scoresService.create(createScoreData);
 
 
