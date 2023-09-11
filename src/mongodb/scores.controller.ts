@@ -22,7 +22,6 @@ export class ScoresController {
       let originalTextTokensArr = originalText.split("");
       let responseTextTokensArr = responseText.split("");
 
-      let incorrectTokens = [];
       let correctTokens = [];
       let missingTokens = [];
 
@@ -41,170 +40,62 @@ export class ScoresController {
         "்",
       ];
 
+      let prevEle = '';
+      let isPrevVowel = false;
+
+
+      let originalTokenArr = [];
+      let responseTokenArr = [];
+
+
+      for (let originalTextELE of originalText.split("")) {
+        if (originalTextELE != ' ') {
+          if (vowelSignArr.includes(originalTextELE)) {
+            if (isPrevVowel) {
+              let prevEleArr = prevEle.split("");
+              prevEle = prevEleArr[0] + originalTextELE;
+              originalTokenArr.push(prevEle);
+            } else {
+              prevEle = prevEle + originalTextELE;
+              originalTokenArr.push(prevEle);
+            }
+            isPrevVowel = true;
+          } else {
+            originalTokenArr.push(originalTextELE);
+            prevEle = originalTextELE;
+            isPrevVowel = false;
+          }
+        }
+      }
+
+      for (let responseTextELE of responseText.split("")) {
+        if (responseTextELE != ' ') {
+          if (vowelSignArr.includes(responseTextELE)) {
+            if (isPrevVowel) {
+              let prevEleArr = prevEle.split("");
+              prevEle = prevEleArr[0] + responseTextELE;
+              responseTokenArr.push(prevEle);
+            } else {
+              prevEle = prevEle + responseTextELE;
+              responseTokenArr.push(prevEle);
+            }
+            isPrevVowel = true;
+          } else {
+            responseTokenArr.push(responseTextELE);
+            prevEle = responseTextELE;
+            isPrevVowel = false;
+          }
+        }
+      }
+
 
       // Comparison Logic
 
-      if (originalText !== responseText) {
-
-        let compareCharArr = [];
-
-        for (let sourceEle of originalText.split(" ")) {
-
-          for (let originalEle of responseText.split(" ")) {
-            if (similarity(originalEle, sourceEle) >= 0.40) {
-              compareCharArr.push({ originalEle: originalEle, sourceEle: sourceEle, score: similarity(originalEle, sourceEle) });
-              //break;
-            }
-          }
-        }
-
-        function similarity(s1, s2) {
-          var longer = s1;
-          var shorter = s2;
-          if (s1.length < s2.length) {
-            longer = s2;
-            shorter = s1;
-          }
-          var longerLength = longer.length;
-          if (longerLength == 0) {
-            return 1.0;
-          }
-          return (longerLength - editDistance(longer, shorter)) / parseFloat(longerLength);
-        }
-
-        function editDistance(s1, s2) {
-          s1 = s1.toLowerCase();
-          s2 = s2.toLowerCase();
-
-          var costs = new Array();
-          for (var i = 0; i <= s1.length; i++) {
-            var lastValue = i;
-            for (var j = 0; j <= s2.length; j++) {
-              if (i == 0)
-                costs[j] = j;
-              else {
-                if (j > 0) {
-                  var newValue = costs[j - 1];
-                  if (s1.charAt(i - 1) != s2.charAt(j - 1))
-                    newValue = Math.min(Math.min(newValue, lastValue),
-                      costs[j]) + 1;
-                  costs[j - 1] = lastValue;
-                  lastValue = newValue;
-                }
-              }
-            }
-            if (i > 0)
-              costs[s2.length] = lastValue;
-          }
-          return costs[s2.length];
-        }
-
-        // console.log(compareCharArr);
-
-
-        for (let [originalTextWordsIndex, originalTextWordsArrELE] of compareCharArr.entries()) {
-          let originalTextWordToken = [];
-          let responseTextWordToken = [];
-
-          let prevEle = '';
-          let isPrevVowel = false;
-
-          for (let originalTextELE of originalTextWordsArrELE['originalEle'].split("")) {
-
-            if (vowelSignArr.includes(originalTextELE)) {
-              if (isPrevVowel) {
-                let prevEleArr = prevEle.split("");
-                prevEle = prevEleArr[0] + originalTextELE;
-                originalTextWordToken.push(prevEle);
-              } else {
-                prevEle = prevEle + originalTextELE;
-                originalTextWordToken.push(prevEle);
-              }
-              isPrevVowel = true;
-            } else {
-              originalTextWordToken.push(originalTextELE);
-              prevEle = originalTextELE;
-              isPrevVowel = false;
-            }
-          }
-
-          prevEle = '';
-          isPrevVowel = false;
-
-          for (let responseTextWordTokenELE of originalTextWordsArrELE['sourceEle'].split("")) {
-            if (vowelSignArr.includes(responseTextWordTokenELE)) {
-              if (isPrevVowel) {
-                let prevEleArr = prevEle.split("");
-                prevEle = prevEleArr[0] + responseTextWordTokenELE;
-                responseTextWordToken.push(prevEle);
-              } else {
-                prevEle = prevEle + responseTextWordTokenELE;
-                responseTextWordToken.push(prevEle);
-              }
-              isPrevVowel = true;
-            } else {
-              responseTextWordToken.push(responseTextWordTokenELE);
-              prevEle = responseTextWordTokenELE;
-              isPrevVowel = false;
-            }
-          }
-
-          let newmissingTokens = originalTextWordToken.filter((originalTextWordTokenEle) => {
-            if (!responseTextWordToken.includes(originalTextWordTokenEle)) {
-              return originalTextWordTokenEle;
-            } else {
-              return false;
-            }
-          })
-
-          missingTokens.push.apply(missingTokens, Array.from(new Set(newmissingTokens)));
-
-          // wordTokensMap = originalTextWordToken.map((originalTextWordTokenEle) => {
-          //   if (responseTextWordToken.includes(originalTextWordTokenEle)) {
-          //     return originalTextWordTokenEle;
-          //   } else {
-          //     return 'wrong/missing';
-          //   }
-          // })
-
-          let newCorrectTokens = originalTextWordToken.filter((originalTextWordTokenEle) => {
-            if (responseTextWordToken.includes(originalTextWordTokenEle)) {
-              return originalTextWordTokenEle;
-            } else {
-              return false;
-            }
-          })
-
-          correctTokens.push.apply(correctTokens, Array.from(new Set(newCorrectTokens)));
-
-          for (let responseTextWordTokenEle of responseTextWordToken) {
-            if (!originalTextWordToken.includes(responseTextWordTokenEle)) {
-              incorrectTokens.push(responseTextWordTokenEle);
-            }
-          }
-        }
-
-      } else {
-        let prevEle = '';
-        let isPrevVowel = false;
-        for (let responseTextTokensArrEle of responseTextTokensArr) {
-          if (responseTextTokensArrEle != "") {
-            if (vowelSignArr.includes(responseTextTokensArrEle)) {
-              if (isPrevVowel) {
-                let prevEleArr = prevEle.split("");
-                prevEle = prevEleArr[0] + responseTextTokensArrEle;
-                correctTokens.push(prevEle);
-              } else {
-                prevEle = prevEle + responseTextTokensArrEle;
-                correctTokens.push(prevEle);
-              }
-              isPrevVowel = true;
-            } else {
-              correctTokens.push(responseTextTokensArrEle);
-              prevEle = responseTextTokensArrEle;
-              isPrevVowel = false;
-            }
-          }
+      for (let originalTokenArrEle of originalTokenArr) {
+        if (responseTokenArr.includes(originalTokenArrEle)) {
+          correctTokens.push(originalTokenArrEle);
+        } else {
+          missingTokens.push(originalTokenArrEle);
         }
       }
 
@@ -212,21 +103,36 @@ export class ScoresController {
 
       //token list for ai4bharat response
       let tokenArr = [];
+      let anamolyTokenArr = [];
 
       // Create Single Array from AI4bharat tokens array
       createScoreDto.output[0].nBestTokens.forEach(element => {
         element.tokens.forEach(token => {
-          tokenArr.push(...Object.entries(token));
+          let key = Object.keys(token)[0];
+          let value = Object.values(token)[0];
+
+          let insertObj = {};
+          insertObj[key] = value;
+          tokenArr.push(insertObj);
+
+          let key1 = Object.keys(token)[1];
+          let value1 = Object.values(token)[1];
+          insertObj = {}
+          insertObj[key1] = value1;
+          anamolyTokenArr.push(insertObj);
         });
       });
 
+
+
       let uniqueChar = new Set();
-      let prevEle = '';
-      let isPrevVowel = false;
+      prevEle = '';
+      isPrevVowel = false;
 
       // Create Unique token array
-      for (let [tokenArrEle, tokenArrEleVal] of tokenArr) {
-        for (let keyEle of tokenArrEle.split("")) {
+      for (let tokenArrEle of tokenArr) {
+        let tokenString = Object.keys(tokenArrEle)[0];
+        for (let keyEle of tokenString.split("")) {
           if (vowelSignArr.includes(keyEle)) {
             if (isPrevVowel) {
               let prevEleArr = prevEle.split("");
@@ -256,10 +162,12 @@ export class ScoresController {
         let prevChar = '';
         let isPrevVowel = false;
 
-        for (let [key, value] of tokenArr) {
+        for (let tokenArrEle of tokenArr) {
+          let tokenString = Object.keys(tokenArrEle)[0];
+          let tokenValue = Object.values(tokenArrEle)[0];
 
-          for (let keyEle of key.split("")) {
-            let scoreVal: any = value;
+          for (let keyEle of tokenString.split("")) {
+            let scoreVal: any = tokenValue;
             let charEle: any = keyEle;
 
             if (vowelSignArr.includes(charEle)) {
@@ -304,38 +212,45 @@ export class ScoresController {
         }
 
         if (value.charkey !== "" && value.charkey !== "▁") {
-          if (incorrectTokens.includes(value.charkey) || correctTokens.includes(value.charkey)) {
+          if (missingTokens.includes(value.charkey) || correctTokens.includes(value.charkey)) {
             confidence_scoresArr.push(
               {
                 token: value.charkey,
                 hexcode: value.charkey.charCodeAt(0).toString(16),
-                confidence_score: incorrectTokens.includes(value.charkey) && !correctTokens.includes(value.charkey) ? 0.10 : value.charvalue,
-                identification_status: incorrectTokens.includes(value.charkey) ? 0 : identification_status
+                confidence_score: missingTokens.includes(value.charkey) && !correctTokens.includes(value.charkey) ? 0.10 : value.charvalue,
+                identification_status: missingTokens.includes(value.charkey) ? 0 : identification_status
               }
             );
-          } else {
-
-            if (!originalTextTokensArr.join('').includes(value.charkey) && !responseTextTokensArr.join('').includes(value.charkey)) {
-              anomaly_scoreArr.push(
-                {
-                  token: value.charkey,
-                  hexcode: value.charkey.charCodeAt(0).toString(16),
-                  confidence_score: 0.10,
-                  identification_status: 0
-                }
-              );
-            } else {
-              confidence_scoresArr.push(
-                {
-                  token: value.charkey,
-                  hexcode: value.charkey.charCodeAt(0).toString(16),
-                  confidence_score: 0.10,
-                  identification_status: 0
-                }
-              );
-            }
           }
         }
+      }
+
+      for (let missingTokensEle of missingTokens) {
+        confidence_scoresArr.push(
+          {
+            token: missingTokensEle,
+            hexcode: missingTokensEle.charCodeAt(0).toString(16),
+            confidence_score: 0.10,
+            identification_status: 0
+          }
+        );
+      }
+
+      for (let anamolyTokenArrEle of anamolyTokenArr) {
+        let tokenString = Object.keys(anamolyTokenArrEle)[0];
+        let tokenValue = Object.values(anamolyTokenArrEle)[0];
+
+        if (tokenString != '') {
+          anomaly_scoreArr.push(
+            {
+              token: tokenString,
+              hexcode: tokenString.charCodeAt(0).toString(16),
+              confidence_score: tokenValue,
+              identification_status: 0
+            }
+          );
+        }
+
       }
 
       let createScoreData = {
@@ -355,7 +270,7 @@ export class ScoresController {
 
 
 
-      return response.status(HttpStatus.CREATED).send({ status: 'success', missingTokens: missingTokens, incorrectTokens: incorrectTokens, correctTokens: correctTokens, confidence_scoresArr: confidence_scoresArr, anomaly_scoreArr: anomaly_scoreArr, uniqueCharArr: uniqueCharArr })
+      return response.status(HttpStatus.CREATED).send({ status: 'success', missingTokens: missingTokens, correctTokens: correctTokens, confidence_scoresArr: confidence_scoresArr, anomaly_scoreArr: anomaly_scoreArr, tokenArr: tokenArr, anamolyTokenArr: anamolyTokenArr })
     } catch (err) {
       return response.status(HttpStatus.INTERNAL_SERVER_ERROR).send({
         status: "error",
