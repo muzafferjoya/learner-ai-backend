@@ -11,7 +11,7 @@ export class ScoresController {
   ) { }
 
   @Post()
-  create(@Res() response: FastifyReply, @Body() createScoreDto: any) {
+  async create(@Res() response: FastifyReply, @Body() createScoreDto: CreateScoreDto) {
     try {
 
       let confidence_scoresArr = [];
@@ -25,7 +25,11 @@ export class ScoresController {
       let correctTokens = [];
       let missingTokens = [];
 
-      let vowelSignArr = [
+      let hindiVowelSignArr = ["ा", "ि", "ी", "ु", "ू", "ृ", "े", "ै", "ो", "ौ", "ं", "ः"];
+
+      let vowelSignArr = [];
+
+      let taVowelSignArr = [
         "ா",
         "ி",
         "ீ",
@@ -39,6 +43,21 @@ export class ScoresController {
         "ௌ",
         "்",
       ];
+
+      let language = createScoreDto?.language || "ta";
+
+      if (language === "hi") {
+        vowelSignArr = hindiVowelSignArr;
+      } else if (language === "ta") {
+        vowelSignArr = taVowelSignArr;
+      }
+
+      let tokenHexcodeData = this.scoresService.gethexcodeMapping(language);
+      let tokenHexcodeDataArr = [];
+
+      await tokenHexcodeData.then((tokenHexcodedata: any) => {
+        tokenHexcodeDataArr = tokenHexcodedata;
+      });
 
       let prevEle = '';
       let isPrevVowel = false;
@@ -213,27 +232,35 @@ export class ScoresController {
 
         if (value.charkey !== "" && value.charkey !== "▁") {
           if (missingTokens.includes(value.charkey) || correctTokens.includes(value.charkey)) {
-            confidence_scoresArr.push(
-              {
-                token: value.charkey,
-                hexcode: value.charkey.charCodeAt(0).toString(16),
-                confidence_score: missingTokens.includes(value.charkey) && !correctTokens.includes(value.charkey) ? 0.10 : value.charvalue,
-                identification_status: missingTokens.includes(value.charkey) ? 0 : identification_status
-              }
-            );
+            let hexcode = getTokenHexcode(value.charkey);
+
+            if (hexcode !== '') {
+              confidence_scoresArr.push(
+                {
+                  token: value.charkey,
+                  hexcode: hexcode,
+                  confidence_score: missingTokens.includes(value.charkey) && !correctTokens.includes(value.charkey) ? 0.10 : value.charvalue,
+                  identification_status: missingTokens.includes(value.charkey) ? 0 : identification_status
+                }
+              );
+            }
           }
         }
       }
 
       for (let missingTokensEle of missingTokens) {
-        confidence_scoresArr.push(
-          {
-            token: missingTokensEle,
-            hexcode: missingTokensEle.charCodeAt(0).toString(16),
-            confidence_score: 0.10,
-            identification_status: 0
-          }
-        );
+        let hexcode = getTokenHexcode(missingTokensEle);
+
+        if (hexcode !== '') {
+          confidence_scoresArr.push(
+            {
+              token: missingTokensEle,
+              hexcode: hexcode,
+              confidence_score: 0.10,
+              identification_status: 0
+            }
+          );
+        }
       }
 
       for (let anamolyTokenArrEle of anamolyTokenArr) {
@@ -241,14 +268,18 @@ export class ScoresController {
         let tokenValue = Object.values(anamolyTokenArrEle)[0];
 
         if (tokenString != '') {
-          anomaly_scoreArr.push(
-            {
-              token: tokenString,
-              hexcode: tokenString.charCodeAt(0).toString(16),
-              confidence_score: tokenValue,
-              identification_status: 0
-            }
-          );
+          let hexcode = getTokenHexcode(tokenString);
+          if (hexcode !== '') {
+            anomaly_scoreArr.push(
+              {
+                token: tokenString.replaceAll("_", ""),
+                hexcode: hexcode,
+                confidence_score: tokenValue,
+                identification_status: 0
+              }
+            );
+          }
+
         }
 
       }
@@ -257,7 +288,7 @@ export class ScoresController {
         user_id: createScoreDto.user_id,
         session: {
           session_id: createScoreDto.session_id,
-          date: createScoreDto.date,
+          language: language,
           original_text: createScoreDto.original_text,
           response_text: responseText,
           confidence_scores: confidence_scoresArr,
@@ -267,6 +298,11 @@ export class ScoresController {
 
       // Store Array to DB
       let data = this.scoresService.create(createScoreData);
+
+      function getTokenHexcode(token: string) {
+        let result = tokenHexcodeDataArr.find(item => item.token === token);
+        return result?.hexcode || '';
+      }
 
 
 
