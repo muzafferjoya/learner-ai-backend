@@ -10,6 +10,13 @@ async function bootstrap() {
     AppModule.forRoot(process.env.DATABASE),
     new FastifyAdapter({ logger: true }),
   );
+
+  app.enableCors({
+    origin: ["*"],
+    methods: ['GET', 'POST', 'HEAD', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    credentials: false,
+  });
+
   await app.listen(process.env.PORT, '0.0.0.0');
 }
 bootstrap();
