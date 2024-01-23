@@ -13,8 +13,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Set up Docker
-        uses: docker/setup-docker@v2
+      - name: Build
+        uses: docker/build-push-action@v2
         with:
           dockerfile: Dockerfile
           context: .
