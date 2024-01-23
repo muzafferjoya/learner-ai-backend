@@ -6,18 +6,18 @@ on:
 
 jobs:
   build-and-deploy:
-    environment: DEV
+    #environment: DEV
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Build
-        uses: docker/build-push-action@v2
-        with:
-          dockerfile: Dockerfile
-          context: .
+      # - name: Build
+      #   uses: docker/build-push-action@v2
+      #   with:
+      #     dockerfile: Dockerfile
+      #     context: .
 
       # - name: Build Docker image
       #   run: docker-compose build
