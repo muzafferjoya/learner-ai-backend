@@ -30,6 +30,6 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.PORT }}
           script: |
-            docker build --pull --rm -f "Dockerfile" -t nestjs-app:latest "."
+            docker build --pull --rm -f "/home/ubuntu/learner-ai-backend/Dockerfile" -t nestjs-app:latest "/home/ubuntu/learner-ai-backend"
             cd /home/ubuntu/learner-ai-backend/ && docker-compose up -d --no-deps --force-recreate nestjs-app
 
