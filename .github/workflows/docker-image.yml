@@ -30,4 +30,5 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.PORT }}
           script: |
-            ssh -i ${{ secrets.SSH_PRIVATE_KEY }} -p ${{ secrets.PORT }} ${{ secrets.USERNAME }}@${{ secrets.HOST }} "cd /home/ubuntu/learner-ai-backend/ && docker-compose up -d"
+            ssh -i "${{ secrets.SSH_PRIVATE_KEY }}" -p ${{ secrets.PORT }} ${{ secrets.USERNAME }}@${{ secrets.HOST }} "cd /home/ubuntu/learner-ai-backend/ && docker-compose up -d"
+
